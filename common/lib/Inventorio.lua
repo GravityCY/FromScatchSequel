@@ -1,6 +1,6 @@
 --- Title: Inventorio
 --- Description: A library for working with inventories.
---- Version: 0.2.2
+--- Version: 0.2.4
 
 local Helper = require("Helper");
 local Peripheralia = require("Peripheralia");
@@ -153,13 +153,13 @@ function Inventorio.new(periph)
         if (emptyA or emptyB) then
             local nonEmpty = _fels(emptyA, slotB, slotA);
             local empty = _fels(emptyA, slotA, slotB);
-            self.transfer(nil, nonEmpty, empty);
+            self.push(nil, nonEmpty, empty);
         else
             local emptySlot = self.findEmpty(true);
             if (emptySlot == nil) then return false; end
-            self.transfer(nil, slotA, emptySlot);
-            self.transfer(nil, slotB, slotA);
-            self.transfer(nil, emptySlot, slotB);
+            self.push(nil, slotA, emptySlot);
+            self.push(nil, slotB, slotA);
+            self.push(nil, emptySlot, slotB);
         end
 
         local items = self.getItems();
@@ -230,19 +230,30 @@ function Inventorio.new(periph)
         return lowest;
     end
 
-    --- <b>Transfer an item to another inventory.</b>
-    ---@param toAddr string|table|nil def: `this.address`— The address of the other inventory or a peripheral object.
+    --- <b>Push an item to another inventory.</b>
+    ---@param toAddr string|table|nil def: `this.address`— an Address `String` | a `Peripheral` object | an `Inventory` object.
     ---@param fromSlot integer|nil def: `1` — The slot to transfer from
     ---@param toSlot integer|nil def: `1` — The slot to transfer to
     ---@param amount integer|nil def: `64` — The amount of items to transfer
     ---@return integer transferred Amount of items transferred
-    function self.transfer(toAddr, fromSlot, toSlot, amount)
+    function self.push(toAddr, fromSlot, toSlot, amount)
         toAddr = Inventorio.asAddress(_def(toAddr, self.address.full));
         fromSlot = _def(fromSlot, 1);
-        toSlot = _def(toSlot, 1);
-        amount = _def(amount, 64);
 
         return periph.pushItems(toAddr, fromSlot, amount, toSlot);
+    end
+
+    --- <b>Pull an item to another inventory.</b>
+    ---@param fromAddr string|table|nil def: `this.address`— an Address `String` | a `Peripheral` object | an `Inventory` object.
+    ---@param fromSlot integer|nil def: `1` — The slot to transfer from
+    ---@param toSlot integer|nil def: `1` — The slot to transfer to
+    ---@param amount integer|nil def: `64` — The amount of items to transfer
+    ---@return integer transferred Amount of items transferred
+    function self.pull(fromAddr, fromSlot, toSlot, amount)
+        fromAddr = Inventorio.asAddress(_def(fromAddr, self.address.full));
+        fromSlot = _def(fromSlot, 1);
+
+        return periph.pullItems(fromAddr, fromSlot, amount, toSlot);
     end
 
     function self.findCB(cb)

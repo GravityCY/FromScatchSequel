@@ -1,11 +1,15 @@
 --- Title: Peripheralia
 --- Description: A library for working with peripherals.
---- Version: 0.2.2
+--- Version: 0.2.3
 
 local Address = require("Address");
 --- A wrapper for CC peripherals.
 
 local Peripharalia = {};
+
+local function instanceof(obj, class)
+    return type(obj) == "table" and getmetatable(obj) == class;
+end
 
 --- <b>Checks if an object is a peripheral.</b>
 ---@param obj any
@@ -59,6 +63,7 @@ end
 ---@return table Wrapper
 function Peripharalia.new(periph)
     local self = {};
+    setmetatable(self, Peripharalia);
     self.type = peripheral.getType(periph);
     self.address = Address.new(peripheral.getName(periph));
     self.invoker = periph;

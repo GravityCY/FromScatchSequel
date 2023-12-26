@@ -18,12 +18,14 @@ function Files.copy(fromPath, toPath)
     return true;
 end
 
---- <b>Copy all files in a list to a path</b>
+--- <b>Copy all files in a list to a path</b> <br>
+--- Example: `Files.copyAll({"path/to/file1", "path/to/file2"}, "path/to/output")` <br>
+--- Output: `/path/to/output/file1`, `/path/to/output/file2`
 ---@param fromList table
 ---@param toPath string
 function Files.copyAll(fromList, toPath)
     for _, path in ipairs(fromList) do
-        local fileName = Path.getFileName(path);
+        local fileName = Path.getFile(path);
         local outPath = Path.join(toPath, fileName);
         Files.copy(path, outPath);
     end

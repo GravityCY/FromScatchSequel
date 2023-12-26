@@ -1,3 +1,7 @@
+--- Title: Path
+--- Description: A library for working with paths.
+--- Version: 0.1.0
+
 local Helper = require("Helper");
 
 local _def = Helper._def;
@@ -28,6 +32,14 @@ function Path.join(topPath, ...)
         ret = ret .. "/" .. clean(subPath);
     end
     return ret;
+end
+
+--- <b>Get the file name of a path.</b> <br>
+--- Examples: `"hello/there.txt"` → `"there.txt"`.
+---@param path any
+---@return string
+function Path.getFile(path)
+    return Path.getFileName(path) .. Path.getFileExtension(path);
 end
 
 --- <b>Get the name of a path.</b> <br>
