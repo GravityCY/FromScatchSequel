@@ -1,13 +1,17 @@
 --- Title: Path
 --- Description: A library for working with paths.
---- Version: 0.1.0
+--- Version: 0.2.0
 
-local Helper = require("Helper");
+local Helper = require(".lib.gravityio.Helper");
 
 local _def = Helper._def;
 local _if = Helper._if;
 
 local Path = {};
+
+local function instanceof(obj, class)
+    return type(obj) == "table" and getmetatable(obj) == class;
+end
 
 --- <b>Clean a path string.</b> <br>
 --- Examples: `"hello/there/"` → `"hello/there"`.
@@ -29,12 +33,12 @@ function Path.join(topPath, ...)
     local subPaths = {...};
     local ret = clean(topPath);
     for _, subPath in ipairs(subPaths) do
-        ret = ret .. "/" .. clean(subPath);
+        ret = clean(ret .. "/" .. clean(subPath));
     end
     return ret;
 end
 
---- <b>Get the file name of a path.</b> <br>
+--- <b>Get the name of a path w/ extension</b> <br>
 --- Examples: `"hello/there.txt"` → `"there.txt"`.
 ---@param path any
 ---@return string
@@ -153,6 +157,11 @@ function Path.new(path)
         return Path.new(absolutePath .. "/" .. joinPath);
     end
 
+    function self.equals(obj)
+        return instanceof(obj, Path) and obj.getPath() == self.getPath();
+    end
+
+    setmetatable(self, Path);
     setup();
     return self;
 end

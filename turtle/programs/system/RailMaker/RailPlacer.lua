@@ -1,5 +1,5 @@
-local TurtyBoy = require("TurtyBoy");
-local Sides = require("Sides");
+local TurtyBoy = require(".lib.gravityio.TurtyBoy");
+local Sides = require(".lib.gravityio.Sides");
 
 local function findCb(items, cb)
     for slot, item in pairs(items) do
@@ -21,20 +21,16 @@ local function findShulkerContents(cb)
     end
 end
 
-local function findTurtleBox()
-    local function isTurtle(slot, item)
-        return item.name:find("turtle");
-    end
+local function getFind(str)
+    return function(slot, item) return item.name:find(str) end
+end
 
-    return findShulkerContents(isTurtle)
+local function findTurtleBox()
+    return findShulkerContents(getFind("turtle"))
 end
 
 local function findMaterialBox()
-    local function isMaterial(slot, item)
-        return item.name:find("rail");
-    end
-
-    return findShulkerContents(isMaterial);
+    return findShulkerContents(getFind("rail"));
 end
 
 local turtleSlot = findTurtleBox();

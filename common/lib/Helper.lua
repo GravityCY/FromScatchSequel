@@ -4,6 +4,10 @@
 
 local Helper = {};
 
+function Helper.isRequired(args)
+    return #args == 2 and type(package.loaded[args[1]]) == "table" and not next(package.loaded[args[1]]);
+end
+
 --- Returns the index of a character in a string.
 ---@param char string
 ---@param str string
@@ -45,6 +49,13 @@ function Helper.iterate(start, finish)
         index = index + 1;
         return current;
     end
+end
+
+--- Returns an iterator that iterates throughout a table.
+---@param t table
+---@return function
+function Helper.ipairs(t)
+    return Helper.iterate(1, #t);
 end
 
 --- Returns the minimum value.

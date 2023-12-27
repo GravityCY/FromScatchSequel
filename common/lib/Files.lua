@@ -2,7 +2,8 @@
 --- Description: A library for working with files.
 --- Version: 0.1.0
 
-local Path = require("Path");
+local Path = require(".lib.gravityio.Path");
+local Helper = require(".lib.gravityio.Helper");
 
 local Files = {};
 
@@ -21,13 +22,24 @@ end
 --- <b>Copy all files in a list to a path</b> <br>
 --- Example: `Files.copyAll({"path/to/file1", "path/to/file2"}, "path/to/output")` <br>
 --- Output: `/path/to/output/file1`, `/path/to/output/file2`
----@param fromList table
+---@param fromPathList table
 ---@param toPath string
-function Files.copyAll(fromList, toPath)
-    for _, path in ipairs(fromList) do
-        local fileName = Path.getFile(path);
-        local outPath = Path.join(toPath, fileName);
+function Files.copyAll(fromPathList, toPath)
+    for _, path in ipairs(fromPathList) do
+        local file = Path.getFile(path);
+        local outPath = Path.join(toPath, file);
         Files.copy(path, outPath);
+    end
+end
+
+function Files.copyAllS(fromPathList, toPathList)
+    local fit = Helper.ipairs(fromPathList);
+    local tit = Helper.ipairs(toPathList);
+    while (true) do
+        local fromPath = fit();
+        local toPath = tit();
+        if (toPath == nil) then break end
+        Files.copy(fromPath, toPath);
     end
 end
 

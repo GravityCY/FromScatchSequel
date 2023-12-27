@@ -2,8 +2,8 @@
 --- Description: A library for working with inventories.
 --- Version: 0.2.4
 
-local Helper = require("Helper");
-local Peripheralia = require("Peripheralia");
+local Helper = require(".lib.gravityio.Helper");
+local Peripheralia = require(".lib.gravityio.Peripheralia");
 
 local _def = Helper._def;
 local _fels = Helper._if;
@@ -109,7 +109,11 @@ function Inventorio.new(periph)
 
     --- <b>Caches the list of items.</b>
     function self.cacheItems()
-        self.itemMapCache = periph.list();
+        local fns = {};
+        for i = 1, self.sizeCache do
+            fns[i] = function() self.itemMapCache[i] = periph.getItemDetail(i); end
+        end
+        parallel.waitForAll(table.unpack(fns));
     end
 
     --- <b>Caches the size of the inventory.</b>

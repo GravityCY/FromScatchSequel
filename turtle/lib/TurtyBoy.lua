@@ -1,12 +1,12 @@
 --- Title: TurtyBoy
 --- Description: A library for working with turtles.
---- Version: 0.3.0
+--- Version: 0.3.1
 
 ---@diagnostic disable: redundant-parameter
 
-local Helper = require("Helper");
-local Inventorio = require("Inventorio");
-local Sides = require("Sides");
+local Helper = require(".lib.gravityio.Helper");
+local Inventorio = require(".lib.gravityio.Inventorio");
+local Sides = require(".lib.gravityio.Sides");
 
 local _def = Helper._def;
 local _fels = Helper._if;
@@ -287,17 +287,38 @@ function TurtyBoy.goMine(side)
 end
 
 --- <b>Lists all Items in the turtles inventory</b>
+---@param detail boolean If true, will return the full item details (takes 50ms)
 ---@return table
-function TurtyBoy.list()
-    return TurtyBoy.listCB(function(slot, item) return true; end);
+function TurtyBoy.list(detail)
+    return TurtyBoy.listCB(detail, function(slot, item) return true; end);
 end
 
-function TurtyBoy.listCB(cb)
+--- <b>Lists all Items in the turtles inventory</b> <br>
+--- Given a callback function, will only return items that return true from the callback
+---@param detail boolean If true, will return the full item details (takes 50ms)
+---@param cb function
+---@return table
+function TurtyBoy.listCB(detail, cb)
+    detail = _def(detail, false);
+
     local items = {};
-    for slot = 1, 16 do
-        local item = turtle.getItemDetail(slot);
-        if (item ~= nil and cb(slot, item)) then
-            items[slot] = item;
+    if (detail) then
+        local fns = {};
+        for slot = 1, 16 do
+            fns[slot] = function()
+                local item = turtle.getItemDetail(slot, true);
+                if (item ~= nil and cb(slot, item)) then
+                    items[slot] = item;
+                end
+            end
+        end
+        parallel.waitForAll(table.unpack(fns));
+    else
+        for slot = 1, 16 do
+            local item = turtle.getItemDetail(slot);
+            if (item ~= nil and cb(slot, item)) then
+                items[slot] = item;
+            end
         end
     end
     return items;

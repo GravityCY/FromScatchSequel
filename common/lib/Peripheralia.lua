@@ -2,7 +2,7 @@
 --- Description: A library for working with peripherals.
 --- Version: 0.2.3
 
-local Address = require("Address");
+local Address = require(".lib.gravityio.Address");
 --- A wrapper for CC peripherals.
 
 local Peripharalia = {};
