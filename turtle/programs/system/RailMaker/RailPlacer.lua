@@ -8,10 +8,10 @@ local function findCb(items, cb)
 end
 
 local function findShulkerContents(cb)
-    for slot, item in pairs(TurtyBoy.list()) do
+    for slot, item in pairs(TurtyBoy.list(true)) do
         if (item.name:find("shulker")) then
             local shulkerSlot = slot;
-            local shulkerItem = turtle.getItemDetail(slot, true);
+            local shulkerItem = item;
 
             local foundSlot, foundItem = findCb(shulkerItem.items, cb)
             if (foundSlot ~= nil) then
@@ -37,7 +37,7 @@ local turtleSlot = findTurtleBox();
 local materialSlot = findMaterialBox();
 
 local function start()
-
+    TurtyBoy.place(Sides.UP, turtleSlot);
 end
 
 local function stop()

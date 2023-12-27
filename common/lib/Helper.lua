@@ -1,11 +1,19 @@
 --- Title: Helper
 --- Description: A general utility library.
---- Version: 0.2.1
+--- Version: 0.2.2
 
 local Helper = {};
 
+
+--- <b>Check if a program is run from shell or from `require`.</b>
+---@param args table Arguments passed to the program from `{...}`.
+---@return boolean required Whether the program was run from `require`.
 function Helper.isRequired(args)
     return #args == 2 and type(package.loaded[args[1]]) == "table" and not next(package.loaded[args[1]]);
+end
+
+function Helper.rep(times, fn, ...)
+    for i = 1, times do fn(...); end
 end
 
 --- Returns the index of a character in a string.

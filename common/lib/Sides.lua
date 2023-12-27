@@ -3,7 +3,7 @@ local Sides = {
 };
 
 local sideNames = {
-    "FORWARD", "RIGHT", "BACK", "LEFT", "UP", "DOWN"
+    [0] = "FORWARD", [1] = "RIGHT", [2] = "BACK", [3] = "LEFT", [4] = "UP", [5] = "DOWN"
 };
 
 local toPeripheralMap = {
@@ -24,6 +24,15 @@ local fromPeripheralMap = {
     ["bottom"] = Sides.DOWN
 }
 
+local toVectorMap = {
+    [Sides.FORWARD] = vector.new(0, 0, 1),
+    [Sides.RIGHT] = vector.new(1, 0, 0),
+    [Sides.BACK] = vector.new(0, 0, -1),
+    [Sides.LEFT] = vector.new(-1, 0, 0),
+    [Sides.UP] = vector.new(0, 1, 0),
+    [Sides.DOWN] = vector.new(0, -1, 0)
+}
+
 function Sides.fromPeripheralName(name)
     return fromPeripheralMap[name];
 end
@@ -38,6 +47,18 @@ end
 
 function Sides.toEnum(name)
     return Sides[name];
+end
+
+function Sides.toVector(side)
+    return toVectorMap[side];
+end
+
+function Sides.isHorizontal(side)
+    return side >= 0 and side <= 3;
+end
+
+function Sides.isVertical(side)
+    return side >= 4 and side <= 5;
 end
 
 --- Will rotate along all of the axis. <br>

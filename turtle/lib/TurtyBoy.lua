@@ -9,7 +9,10 @@ local Inventorio = require(".lib.gravityio.Inventorio");
 local Sides = require(".lib.gravityio.Sides");
 
 local _def = Helper._def;
-local _fels = Helper._if;
+local _if = Helper._if;
+
+local facing = Sides.FORWARD;
+local pos = vector.new(0, 0, 0);
 
 local TurtyBoy = {};
 
@@ -93,7 +96,20 @@ end
 ---@return boolean success Whether the turtle could successfully move.
 ---@return string|nil error The reason the turtle could not move.
 function TurtyBoy.move(side)
-    return TurtyBoy.act(Actions.MOVE, side);
+    local success, message = TurtyBoy.act(Actions.MOVE, side);
+    if (not success) then return success, message; end
+    local facingVec = Sides.toVector(facing);
+
+    if (Sides.isHorizontal(side)) then
+        local scale = _if(side == Sides.FORWARD, 1, -1);
+        pos.x = pos.x + facingVec.x * scale;
+        pos.y = pos.y + facingVec.y * scale;
+        pos.z = pos.z + facingVec.z * scale;
+    else
+        local sideVec = Sides.toVector(side);
+        pos.y = pos.y + sideVec.y;
+    end
+    return success, message;
 end
 
 --- <b>Mines a block</b>
@@ -105,9 +121,11 @@ function TurtyBoy.mine(side)
 end
 
 --- <b>Places an item</b>
+---@param slot integer|nil Slot
 ---@param side integer Side Enum
 ---@return any
-function TurtyBoy.place(side)
+function TurtyBoy.place(side, slot)
+    if (slot ~= nil) then turtle.select(slot); end
     return TurtyBoy.act(Actions.PLACE, side);
 end
 
@@ -125,6 +143,61 @@ function TurtyBoy.turn(side)
     side = _def(side, Sides.RIGHT);
 
     return TurtyBoy.act(Actions.TURN, side);
+end
+
+--- <b>Faces the turtle</b>
+---@param preferred integer Side Enum
+function TurtyBoy.face(preferred)
+    if (preferred == facing) then return; end
+
+    local distClock = (preferred - facing) % 4;
+    local distCClock = (facing - preferred) % 4;
+    local turnSide = _if(distClock < distCClock, Sides.RIGHT, Sides.LEFT);
+    local turnCount = _if(distClock < distCClock, distClock, distCClock);
+    for i = 1, turnCount do TurtyBoy.turn(turnSide); end
+    facing = preferred;
+end
+
+--- <b>Moves the turtle to the specified position</b>
+---@param x integer
+---@param y integer
+---@param z integer
+---@return boolean
+function TurtyBoy.go(x, y, z)
+    if (pos.x == x and pos.y == y and pos.z == z) then return true; end
+
+    local to = vector.new(x, y, z);
+
+    local dx = x - pos.x;
+    local dy = y - pos.y;
+    local dz = z - pos.z;
+
+    local ax = math.abs(dx);
+    local ay = math.abs(dy);
+    local az = math.abs(dz);
+
+    local xDir = _if(dx > 0, Sides.RIGHT, Sides.LEFT);
+    local yDir = _if(dy > 0, Sides.UP, Sides.DOWN);
+    local zDir = _if(dz > 0, Sides.FORWARD, Sides.BACK);
+
+    -- Forward
+    if (az ~= 0) then
+        TurtyBoy.face(zDir);
+        Helper.rep(az, TurtyBoy.move, Sides.FORWARD);
+    end
+
+    -- Right
+    if (ax ~= 0) then
+        TurtyBoy.face(xDir);
+        Helper.rep(ax, TurtyBoy.move, Sides.FORWARD);
+    end
+
+    -- Up
+    if (ay ~= 0) then
+        Helper.rep(ay, TurtyBoy.move, yDir);
+    end
+
+    return pos:equals(to);
 end
 
 --- <b> Sucks an item </b> <br>
@@ -407,6 +480,14 @@ function TurtyBoy.countCB(cb)
         end
     end
     return count;
+end
+
+function TurtyBoy.getFacing()
+    return facing;
+end
+
+function TurtyBoy.getPos()
+    return pos;
 end
 
 return TurtyBoy;
