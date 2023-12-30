@@ -1,8 +1,17 @@
 --- Title: Address
 --- Description: A library for working with addresses.
---- Version: 0.1.0
+--- Version: 0.2.0
 
 local Address = {};
+
+local sideMap = {
+    ["front"]   = true,
+    ["right"]   = true,
+    ["back"]    = true,
+    ["left"]    = true,
+    ["top"]     = true,
+    ["bottom"]  = true
+}
 
 function Address.equals(a, b)
     return a.full == b.full;
@@ -27,8 +36,16 @@ function Address.new(full)
     self.type = Address.getType(full);
     self.index = Address.getIndex(full);
 
+    function self.isSide()
+        return sideMap[self.full] ~= nil;
+    end
+
     function self.equals(other)
         return Address.equals(self, other);
+    end
+
+    function self.tostring()
+        return self.full;
     end
 
     return self;

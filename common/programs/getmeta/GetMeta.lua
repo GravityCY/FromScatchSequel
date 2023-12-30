@@ -19,5 +19,5 @@ while (true) do
 end
 
 for i, v in ipairs(metaList) do
-    print(v.token .. ": " .. v.value)
+    print(v.key .. ": " .. v.value)
 end

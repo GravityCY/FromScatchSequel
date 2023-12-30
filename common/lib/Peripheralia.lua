@@ -1,14 +1,36 @@
 --- Title: Peripheralia
 --- Description: A library for working with peripherals.
---- Version: 0.2.3
+--- Version: 0.2.4
 
+local Helper = require(".lib.gravityio.Helper");
 local Address = require(".lib.gravityio.Address");
+
+local _def = Helper._def;
+local _if = Helper._if;
+
 --- A wrapper for CC peripherals.
 
 local Peripharalia = {};
+local noSide = true;
 
 local function instanceof(obj, class)
     return type(obj) == "table" and getmetatable(obj) == class;
+end
+
+local function removeSide(tab)
+    local new = {};
+    for _, periph in ipairs(tab) do
+        if (not periph.address.isSide()) then
+            table.insert(new, periph);
+        end
+    end
+    return new;
+end
+
+--- <b>Whether to exclude peripherals on the sides.</b>
+---@param value boolean
+function Peripharalia.setNoSide(value)
+    noSide = value;
 end
 
 --- <b>Checks if an object is a peripheral.</b>
@@ -70,7 +92,6 @@ function Peripharalia.new(periph)
     return self;
 end
 
-
 --- Get a peripheral by address and wraps it.
 ---@param address string
 ---@return table|nil Wrapper
@@ -89,7 +110,8 @@ function Peripharalia.first(type)
     return Peripharalia.wrap(original);
 end
 
---- Get all peripherals of the given type.
+--- <b>Get all peripherals of the given type.</b> <br>
+--- Removes peripherals on the sides if `noSide` is set.
 ---@param type string
 ---@return table|nil peripherals A list of wrapped peripherals.
 function Peripharalia.find(type)
@@ -99,7 +121,7 @@ function Peripharalia.find(type)
     for i = 1, #original do
         table.insert(wrapped, Peripharalia.wrap(original[i]));
     end
-    return wrapped;
+    return _if(noSide, removeSide(wrapped), wrapped);
 end
 
 return Peripharalia;

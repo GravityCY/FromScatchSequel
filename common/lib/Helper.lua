@@ -1,8 +1,48 @@
 --- Title: Helper
 --- Description: A general utility library.
---- Version: 0.2.2
+--- Version: 0.4.0
 
 local Helper = {};
+
+local executeLimit = 128;
+
+---Execute a table of functions in batches
+---@param func function[]
+---@param skipPartial? boolean Only do complete batches and skip the remainder.
+---@return function[] skipped Functions that were skipped as they didn't fit.
+function Helper.batchExecute(func, skipPartial, limit)
+    skipPartial = Helper._def(skipPartial, false);
+    limit = Helper._def(limit, executeLimit);
+
+    local batches = #func / limit
+    batches = Helper._if(skipPartial, math.floor(batches), math.ceil(batches));
+
+    for batch = 1, batches do
+      local start = ((batch - 1) * limit) + 1
+      local batch_end = math.min(start + limit - 1, #func)
+      parallel.waitForAll(table.unpack(func, start, batch_end))
+    end
+    return table.pack(table.unpack(func, 1 + limit * batches))
+  end
+
+--- <b>Wait for all functions to finish.</b>
+---@param tab table List of objects to wait for.
+---@param fnGetter function A function receiving objects from the table and returning a function.
+function Helper.waitForAllTab(tab, fnGetter)
+    local fns = {};
+    for _, v in ipairs(tab) do
+        table.insert(fns, fnGetter(v));
+    end
+    parallel.waitForAll(table.unpack(fns));
+end
+
+function Helper.waitForAllIt(from, to, fnGetter)
+    local fns = {};
+    for i = from, to do
+        table.insert(fns, fnGetter(i));
+    end
+    parallel.waitForAll(table.unpack(fns));
+end
 
 
 --- <b>Check if a program is run from shell or from `require`.</b>

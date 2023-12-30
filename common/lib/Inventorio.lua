@@ -1,6 +1,6 @@
 --- Title: Inventorio
 --- Description: A library for working with inventories.
---- Version: 0.2.4
+--- Version: 0.3.2
 
 local Helper = require(".lib.gravityio.Helper");
 local Peripheralia = require(".lib.gravityio.Peripheralia");
@@ -10,6 +10,20 @@ local _fels = Helper._if;
 
 local function instanceof(obj, class)
     return type(obj) == "table" and getmetatable(obj) == class;
+end
+
+local function getNamePredicate(name)
+    return function(slot, item) return item.name == name; end
+end
+
+local Timer = {}
+
+function Timer.start()
+    Timer.startTime = os.clock();
+end
+
+function Timer.stop()
+    return os.clock() - Timer.startTime;
 end
 
 -- A library for working with inventories.
@@ -26,7 +40,6 @@ function Inventorio.asAddress(obj)
     end
     return Peripheralia.asAddress(obj);
 end
-
 
 --- <b>An Inventory Object</b> <br>
 --- WARNING! All items are cached, nothing is live, you must call `cache()` everytime you want to make sure the inventory is up-to-date. <br>
@@ -73,6 +86,7 @@ function Inventorio.new(periph)
     end
 
     function self.init()
+        self.sizeCache = periph.size();
         self.cache();
         return self;
     end
@@ -111,35 +125,74 @@ function Inventorio.new(periph)
     function self.cacheItems()
         local fns = {};
         for i = 1, self.sizeCache do
-            fns[i] = function() self.itemMapCache[i] = periph.getItemDetail(i); end
+            table.insert(fns, function() self.itemMapCache[i] = periph.getItemDetail(i); end);
         end
         parallel.waitForAll(table.unpack(fns));
     end
 
-    --- <b>Caches the size of the inventory.</b>
-    function self.cacheSize()
-        self.sizeCache = periph.size();
-    end
-
     --- <b>Caches information about the inventory.</b>
     function self.cache()
-        parallel.waitForAll(self.cacheItems, self.cacheSize);
+        self.cacheItems();
         self.occupiedSlotsCache = self.occupied();
         self.freeSlotsCache = self.sizeCache - self.occupiedSlotsCache;
     end
 
-    --- <b>Returns the item in the specified slot.</b>
-    ---@param slot integer
-    ---@return table|nil
-    function self.getAt(slot)
-        return self.getItems()[slot];
+    --- <b>Push an item to another inventory.</b>
+    ---@param toAddr string|table|nil def: `this.address`— an Address `String` | a `Peripheral` object | an `Inventory` object.
+    ---@param fromSlot integer|nil def: `1` — The slot to transfer from
+    ---@param toSlot integer|nil def: `1` — The slot to transfer to
+    ---@param amount integer|nil def: `64` — The amount of items to transfer
+    ---@return integer transferred Amount of items transferred
+    function self.push(toAddr, fromSlot, toSlot, amount)
+        toAddr = Inventorio.asAddress(_def(toAddr, self.address.full));
+        fromSlot = _def(fromSlot, 1);
+
+        return periph.pushItems(toAddr, fromSlot, amount, toSlot);
     end
 
-    --- <b>Returns whether the slot is empty.</b>
-    ---@param slot integer
-    ---@return boolean
-    function self.isEmptyAt(slot)
-        return self.getAt(slot) == nil;
+    --- <b>Pull an item to another inventory.</b>
+    ---@param fromAddr string|table|nil def: `this.address`— an Address `String` | a `Peripheral` object | an `Inventory` object.
+    ---@param fromSlot integer|nil def: `1` — The slot to transfer from
+    ---@param toSlot integer|nil def: `1` — The slot to transfer to
+    ---@param amount integer|nil def: `64` — The amount of items to transfer
+    ---@return integer transferred Amount of items transferred
+    function self.pull(fromAddr, fromSlot, toSlot, amount)
+        fromAddr = Inventorio.asAddress(_def(fromAddr, self.address.full));
+        fromSlot = _def(fromSlot, 1);
+
+        return periph.pullItems(fromAddr, fromSlot, amount, toSlot);
+    end
+
+    --- <b>Pushes items to another inventory using a callback.</b>
+    ---@param toAddr string|table def: `this.address`— an Address `String` | a `Peripheral` object | an `Inventory` object.
+    ---@param cb function Function that receives as arguments, a slot number, and an item object; returns boolean
+    ---@param toSlot integer
+    ---@param amount integer
+    ---@return boolean success, integer|nil pushed `success` Whether all items were pushed | `pushed` Amount of items pushed
+    function self.pushCB(toAddr, cb, toSlot, amount)
+        toAddr = Inventorio.asAddress(toAddr);
+        amount = _def(amount, 64);
+
+        local pushed = 0;
+        autoCache();
+        for slot, item in pairs(self.getItems()) do
+            if (cb(slot, item)) then
+                pushed = pushed + self.push(toAddr, slot, toSlot, amount - pushed);
+                if (pushed == amount) then return true, pushed; end
+            end
+        end
+        enableAutoCache();
+        return false, pushed;
+    end
+
+    --- <b>Push an item to another inventory by name.</b>
+    ---@param toAddr string|table def: `this.address`— an Address `String` | a `Peripheral` object | an `Inventory` object.
+    ---@param itemName string The name of the item; eg. "minecraft:stick"
+    ---@param toSlot integer
+    ---@param amount integer
+    ---@return boolean success, integer|nil pushed `success` Whether all items were pushed | `pushed` Amount of items pushed
+    function self.pushName(toAddr, itemName, toSlot, amount)
+        return self.pushCB(toAddr, getNamePredicate(itemName), toSlot, amount);
     end
 
     --- <b>Swaps two slots.</b> <br>
@@ -173,6 +226,20 @@ function Inventorio.new(periph)
 
         enableAutoCache();
         return true;
+    end
+
+    --- <b>Returns the item in the specified slot.</b>
+    ---@param slot integer
+    ---@return table|nil
+    function self.getAt(slot)
+        return self.getItems()[slot];
+    end
+
+    --- <b>Returns whether the slot is empty.</b>
+    ---@param slot integer
+    ---@return boolean
+    function self.isEmptyAt(slot)
+        return self.getAt(slot) == nil;
     end
 
     --- Returns whether a slot is the lowest slot in the inventory.
@@ -232,32 +299,6 @@ function Inventorio.new(periph)
             if (slot < lowest) then lowest = slot; end
         end
         return lowest;
-    end
-
-    --- <b>Push an item to another inventory.</b>
-    ---@param toAddr string|table|nil def: `this.address`— an Address `String` | a `Peripheral` object | an `Inventory` object.
-    ---@param fromSlot integer|nil def: `1` — The slot to transfer from
-    ---@param toSlot integer|nil def: `1` — The slot to transfer to
-    ---@param amount integer|nil def: `64` — The amount of items to transfer
-    ---@return integer transferred Amount of items transferred
-    function self.push(toAddr, fromSlot, toSlot, amount)
-        toAddr = Inventorio.asAddress(_def(toAddr, self.address.full));
-        fromSlot = _def(fromSlot, 1);
-
-        return periph.pushItems(toAddr, fromSlot, amount, toSlot);
-    end
-
-    --- <b>Pull an item to another inventory.</b>
-    ---@param fromAddr string|table|nil def: `this.address`— an Address `String` | a `Peripheral` object | an `Inventory` object.
-    ---@param fromSlot integer|nil def: `1` — The slot to transfer from
-    ---@param toSlot integer|nil def: `1` — The slot to transfer to
-    ---@param amount integer|nil def: `64` — The amount of items to transfer
-    ---@return integer transferred Amount of items transferred
-    function self.pull(fromAddr, fromSlot, toSlot, amount)
-        fromAddr = Inventorio.asAddress(_def(fromAddr, self.address.full));
-        fromSlot = _def(fromSlot, 1);
-
-        return periph.pullItems(fromAddr, fromSlot, amount, toSlot);
     end
 
     function self.findCB(cb)
