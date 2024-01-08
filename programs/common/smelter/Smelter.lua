@@ -1,17 +1,28 @@
 --- Title: Smelter
 --- Description: A program for smelting ores.
---- Version: 0.3.1
+--- Version: 0.4.2
 
-local Peripheralia = require(".lib.gravityio.Peripheralia");
-local Inventorio = require(".lib.gravityio.Inventorio");
-local Helper = require(".lib.gravityio.Helper");
+package.path = package.path .. ";/lib/?.lua"
+
+local AddressTranslations = require("gravityio.AddressTranslations");
+local Peripheralia = require("gravityio.Peripheralia");
+local Inventorio = require("gravityio.Inventorio");
+local Helper = require("gravityio.Helper");
 
 local _def = Helper._def;
 local _if = Helper._if;
 
+--- Get or Make a table
+---@param tab table
+---@param key string
+---@return table
+local function _gmk(tab, key)
+    tab[key] = _def(tab[key], {});
+    return tab[key];
+end
+
 local Integrator = {};
 local Furnace = {};
-
 local Timer = {}
 
 function Timer.start()
@@ -28,65 +39,103 @@ end
 ---@param addr string
 ---@param side string `"top"` or `"bottom"` etc.
 ---@return table
-function Integrator.new(addr, side)
+function Integrator.new(addr)
     local self = {};
     local periph = Peripheralia.get(addr);
+    local sides = periph.getSides();
     function self.enable()
-        periph.setOutput(side, true);
+        for _, side in ipairs(sides) do
+            periph.setOutput(side, true);
+        end
     end
     function self.disable()
-        periph.setOutput(side, false);
+        for _, side in ipairs(sides) do
+            periph.setOutput(side, false);
+        end
     end
     return self
 end
 
 --- <b>Wraps a furnace.</b>
 ---@param self table
----@return table
+---@return Furnace
 function Furnace.wrap(self)
-    self.materialSlot = 1;
-    self.fuelSlot = 2;
-    self.outputSlot = 3;
+    ---@class Furnace: Inventorio
+    local tab = self;
 
-    function self.getMaterial()
-        return self.getAt(self.materialSlot);
+    tab.materialSlot = 1;
+    tab.fuelSlot = 2;
+    tab.outputSlot = 3;
+    function tab.getMaterial()
+        return tab.getAt(tab.materialSlot);
     end
-    function self.getFuelItem()
-        return self.getAt(self.fuelSlot);
+    function tab.getFuelItem()
+        return tab.getAt(tab.fuelSlot);
     end
-    function self.getOutput()
-        return self.getAt(self.outputSlot);
+    function tab.getOutput()
+        return tab.getAt(tab.outputSlot);
     end
-    return self;
+    return tab;
 end
 
 --- <b>Creates an array of furnaces.</b>
----@param tab any
----@return table
-local function FurnaceArray(tab)
+---@param defArray any
+---@return FurnaceArray
+local function FurnaceArray(defArray)
+    defArray = _def(defArray, {});
+    wrap = _def(wrap, true);
+
+    ---@class FurnaceArray
     local self = {};
-    for index, periph in ipairs(tab) do
-        self[index] = Furnace.wrap(Inventorio.new(periph));
+    ---@type Furnace[]
+    local array = {};
+
+    function self.getArray()
+        return array;
     end
 
+    function self.add(any)
+        for index, furnace in ipairs(array) do
+            if (furnace == any) then return; end
+        end
+        
+        table.insert(array, any);
+    end
+
+    function self.remove(any)
+        local new = {};
+        for index, furnace in ipairs(array) do
+            if (furnace ~= any) then
+                table.insert(new, furnace);
+            end
+        end
+        array = new;
+    end
+
+    --- <b>Initializes all furnaces.</b>
     function self.init()
         local fns = {};
 
-        for index, furnace in ipairs(self) do
+        for index, furnace in ipairs(array) do
             table.insert(fns, furnace.init);
         end
 
         Helper.batchExecute(fns, nil, 16);
     end
 
-    function self.cache()
+    --- <b>Caches all furnaces.</b>
+    function self.cache(split)
         local fns = {};
 
-        for index, furnace in ipairs(self) do
+        for index, furnace in ipairs(array) do
             table.insert(fns, furnace.cache);
         end
 
-        Helper.batchExecute(fns, nil, 16);
+        Helper.batchExecute(fns, nil, split);
+    end
+
+    for index, periph in ipairs(defArray) do
+        self.add(Furnace.wrap(Inventorio.get(periph)));
     end
 
     return self;
@@ -97,20 +146,30 @@ local stats = {
     smelted = {},
 };
 
+local adtr = AddressTranslations.new("smelter");
+
+adtr.setDescriptions({
+    input="The Input Inventory.",
+    output="The Output Inventory.",
+    fuel="The Fuel Inventory.",
+});
+
+local activeFurnaces = FurnaceArray();
+
 --- <b>How often the lights thread runs in seconds.</b>
 local lightSleep = 0.1;
 
 local speaker = Peripheralia.first("speaker");
 
-local input = Inventorio.new("minecraft:barrel_4");
-local output = Inventorio.new("minecraft:barrel_7");
-local fuel = Inventorio.new("minecraft:barrel_1");
+local input = Inventorio.get(adtr.get("input"));
+local output = Inventorio.get(adtr.get("output"));
+local fuel = Inventorio.get(adtr.get("fuel"));
 
 local normalFurnaces = FurnaceArray(Peripheralia.find("minecraft:furnace"));
 local blastFurnaces = FurnaceArray(Peripheralia.find("minecraft:blast_furnace"));
 local smokerFurnaces = FurnaceArray(Peripheralia.find("minecraft:smoker"));
 
-local totalFurnaces = #normalFurnaces + #blastFurnaces + #smokerFurnaces;
+local totalFurnaces = #normalFurnaces.getArray() + #blastFurnaces.getArray() + #smokerFurnaces.getArray();
 
 local blastFurnaceItems = {
     "minecraft:raw_copper",
@@ -133,21 +192,18 @@ local smokerFurnaceItems = {
 };
 
 local integrators = {
-    Integrator.new("redstone_integrator_17", "south"),
-    Integrator.new("redstone_integrator_18", "top"),
-    Integrator.new("redstone_integrator_19", "top"),
-    Integrator.new("redstone_integrator_13", "top"),
-    Integrator.new("redstone_integrator_12", "top"),
-
-    Integrator.new("redstone_integrator_11", "north"),
-    Integrator.new("redstone_integrator_10", "north"),
-
-    Integrator.new("redstone_integrator_9", "bottom"),
-    Integrator.new("redstone_integrator_8", "bottom"),
-    Integrator.new("redstone_integrator_14", "bottom"),
-    Integrator.new("redstone_integrator_15", "bottom"),
-
-    Integrator.new("redstone_integrator_16", "south"),
+    Integrator.new(adtr.get("redstone_integrator_1")),
+    Integrator.new(adtr.get("redstone_integrator_2")),
+    Integrator.new(adtr.get("redstone_integrator_3")),
+    Integrator.new(adtr.get("redstone_integrator_4")),
+    Integrator.new(adtr.get("redstone_integrator_5")),
+    Integrator.new(adtr.get("redstone_integrator_6")),
+    Integrator.new(adtr.get("redstone_integrator_7")),
+    Integrator.new(adtr.get("redstone_integrator_8")),
+    Integrator.new(adtr.get("redstone_integrator_9")),
+    Integrator.new(adtr.get("redstone_integrator_10")),
+    Integrator.new(adtr.get("redstone_integrator_11")),
+    Integrator.new(adtr.get("redstone_integrator_12")),
 }
 
 --- <b>Returns a predicate that matches the given item name.</b>
@@ -190,7 +246,7 @@ end
 
 --- <b>Returns the furnace array for the given item name.</b>
 ---@param itemName string
----@return table|nil furnaceArray
+---@return FurnaceArray furnaceArray
 local function getArray(itemName)
     if (isBlastFurnaceItem(itemName)) then return blastFurnaces;
     elseif (isSmokerItem(itemName)) then return smokerFurnaces;
@@ -235,7 +291,7 @@ local function getAvailableFurnace(name)
     local lowest = math.huge;
     local lowestFurnace = nil;
     local furnaceArray = getArray(name);
-    for _, furnace in ipairs(furnaceArray) do
+    for _, furnace in ipairs(furnaceArray.getArray()) do
         local item = furnace.getMaterial();
         if (item == nil) then
             return furnace;
@@ -247,18 +303,6 @@ local function getAvailableFurnace(name)
         end
     end
     return lowestFurnace;
-end
-
-local function getOnFurnaces()
-    local on = 0;
-    for _, furnaceArray in ipairs({normalFurnaces, blastFurnaces, smokerFurnaces}) do
-        for _, furnace in ipairs(furnaceArray) do
-            if (furnace.getMaterial() ~= nil) then
-                on = on + 1;
-            end
-        end
-    end
-    return on;
 end
 
 local function getItemCounts()
@@ -276,45 +320,43 @@ local function doInput()
             local furnace = getAvailableFurnace(itemName);
             if (furnace ~= nil) then
                 if (fuel.pushName(furnace, "minecraft:coal", furnace.fuelSlot, 1)) then
-                    input.pushName(furnace, itemName, furnace.materialSlot, 8);
-                    cache();
+                    if (input.pushName(furnace, itemName, furnace.materialSlot, 8)) then
+                        activeFurnaces.add(furnace);
+                    end
                 end
             end
         end
     end
-    cache();
-end
-
---- Get or Make a table
----@param tab table
----@param key string
----@return table
-local function _gmk(tab, key)
-    tab[key] = _def(tab[key], {});
-    return tab[key];
+    parallel.waitForAll(input.cache, fuel.cache, activeFurnaces.cache);
 end
 
 local function doOutput()
     local fns = {};
-    local furnaceArrays = {normalFurnaces, blastFurnaces, smokerFurnaces};
-    for _, furnaceArray in ipairs(furnaceArrays) do
-        for _, furnace in ipairs(furnaceArray) do
-            local furnaceOut = furnace.getOutput();
-            if (furnaceOut ~= nil) then
-                table.insert(fns, function()
-                    local pushed = furnace.push(output, furnace.outputSlot);
-                    stats.smelted[furnaceOut.name] = _def(stats.smelted[furnaceOut.name], 0) + pushedt;
-                end)
-            end
+    local toRemove = {};
+
+    for _, furnace in ipairs(activeFurnaces.getArray()) do
+        local furnaceMat = furnace.getMaterial();
+        local furnaceOut = furnace.getOutput();
+        if (furnaceOut ~= nil) then
+            table.insert(fns, function()
+                local pushed = furnace.push(output, furnace.outputSlot);
+                stats.smelted[furnaceOut.name] = _def(stats.smelted[furnaceOut.name], 0) + pushed;
+            end)
         end
+        if (furnaceMat == nil) then table.insert(toRemove, furnace); end
     end
-    parallel.waitForAll(table.unpack(fns));
+
+    for _, furnace in ipairs(toRemove) do
+        activeFurnaces.remove(furnace);
+    end
+
+    Helper.batchExecute(fns, nil, 16);
 end
 
 local function lightsThread()
     local prevOn = 0;
     while true do
-        local onFurnaces = getOnFurnaces();
+        local onFurnaces = #activeFurnaces.getArray();
 
         if (onFurnaces == 0 and prevOn ~= 0) then
             speaker.playNote("harp", 1, 8);

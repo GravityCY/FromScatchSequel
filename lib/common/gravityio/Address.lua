@@ -17,18 +17,25 @@ function Address.equals(a, b)
     return a.full == b.full;
 end
 
+---@param address string
+---@return string
 function Address.getNamespace(address)
     return address:match("(.+):");
 end
 
+---@param address string
+---@return string
 function Address.getType(address)
     return address:match(":(.+)_")
 end
 
+---@param address string
+---@return number|nil
 function Address.getIndex(address)
     return tonumber(address:match("_(%d+)"));
 end
 
+---@param full string
 function Address.new(full)
     local self = {};
     self.full = full;

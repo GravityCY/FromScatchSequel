@@ -1,12 +1,12 @@
 --- Title: TurtyBoy
 --- Description: A library for working with turtles.
---- Version: 0.3.1
+--- Version: 0.4.1
 
 ---@diagnostic disable: redundant-parameter
 
-local Helper = require(".lib.gravityio.Helper");
-local Inventorio = require(".lib.gravityio.Inventorio");
-local Sides = require(".lib.gravityio.Sides");
+local Helper = require("gravityio.Helper");
+local Inventorio = require("gravityio.Inventorio");
+local Sides = require("gravityio.Sides");
 
 local _def = Helper._def;
 local _if = Helper._if;
@@ -163,8 +163,9 @@ end
 ---@param y integer
 ---@param z integer
 ---@return boolean
-function TurtyBoy.go(x, y, z)
+function TurtyBoy.go(x, y, z, moveFn)
     if (pos.x == x and pos.y == y and pos.z == z) then return true; end
+    moveFn = _def(moveFn, TurtyBoy.move);
 
     local to = vector.new(x, y, z);
 
@@ -183,18 +184,18 @@ function TurtyBoy.go(x, y, z)
     -- Forward
     if (az ~= 0) then
         TurtyBoy.face(zDir);
-        Helper.rep(az, TurtyBoy.move, Sides.FORWARD);
+        Helper.rep(az, moveFn, Sides.FORWARD);
     end
 
     -- Right
     if (ax ~= 0) then
         TurtyBoy.face(xDir);
-        Helper.rep(ax, TurtyBoy.move, Sides.FORWARD);
+        Helper.rep(ax, moveFn, Sides.FORWARD);
     end
 
     -- Up
     if (ay ~= 0) then
-        Helper.rep(ay, TurtyBoy.move, yDir);
+        Helper.rep(ay, moveFn, yDir);
     end
 
     return pos:equals(to);
@@ -296,15 +297,17 @@ end
 --- <<<<<<<<<<
 --- >>>>>>>>>E
 --- ```
----@param dx integer How many times to go forward
----@param dz integer How many times to go left or right (Supports negative numbers)
----@param forward function A function defining how to move forward. Receives 2 optional `integer` arguments, of the current x and z coordinates.
+---@param dz integer How many times to go forward
+---@param dx integer How many times to go left or right (Supports negative numbers)
+---@param forward function A function defining how to move forward. Receives 2 optional `integer` arguments, of the current z and x coordinates.
 ---@return boolean
-function TurtyBoy.goArea(dx, dz, forward)
-    forward = forward or turtle.forward;
+function TurtyBoy.goArea(dz, dx, forward)
+    forward = _def(forward, turtle.forward);
+
+    local ax = math.abs(dx);
 
     local isForward = true;
-    local goRight = dz > 0;
+    local goRight = dx > 0;
     local rightSide = nil;
     local leftSide = nil;
     if (goRight) then
@@ -321,13 +324,13 @@ function TurtyBoy.goArea(dx, dz, forward)
     end
 
     if (forward(0, 0) == false) then return false; end
-    for cz = 1, dz do
-        for cx = 1, dx - 1 do
-            if (forward(cx, cz) == false) then return false; end
+    for cx = 1, ax do
+        for cz = 1, dz - 1 do
+            if (forward(cz, cx) == false) then return false; end
         end
-        if (cz ~= dz) then
+        if (cx ~= ax) then
             turn();
-            if (forward(dx, cz) == false) then return false; end
+            if (forward(dz, cx) == false) then return false; end
             turn();
             isForward = not isForward;
         end
@@ -336,16 +339,19 @@ function TurtyBoy.goArea(dx, dz, forward)
 end
 
 --- <b>Mines an area</b>
----@param dx integer
----@param dz integer
+---@param dz integer forward
+---@param dx integer right
 ---@return boolean
-function TurtyBoy.mineArea(dx, dz)
-    return TurtyBoy.goArea(dx, dz, function(x, y)
+function TurtyBoy.mineArea(dz, dx)
+
+    local function forward(z, x)
         TurtyBoy.goMine(Sides.FORWARD);
         TurtyBoy.mine(Sides.UP);
         TurtyBoy.mine(Sides.DOWN);
         return true;
-    end);
+    end
+
+    return TurtyBoy.goArea(dz, dx, forward);
 end
 
 --- <b>Ensures a Move, by digging out an obstacle</b> <br>

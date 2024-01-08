@@ -6,7 +6,17 @@ local Helper = {};
 
 local executeLimit = 128;
 
----Execute a table of functions in batches
+function Helper.toString(tab, separator)
+    separator = Helper._def(separator, " ");
+
+    local ret = tab[1];
+    for i = 2, #tab do
+        ret = ret .. separator .. tab[i];
+    end
+    return ret;
+end
+
+--- <b>Execute a table of functions in batches</b>
 ---@param func function[]
 ---@param skipPartial? boolean Only do complete batches and skip the remainder.
 ---@return function[] skipped Functions that were skipped as they didn't fit.
@@ -23,7 +33,7 @@ function Helper.batchExecute(func, skipPartial, limit)
       parallel.waitForAll(table.unpack(func, start, batch_end))
     end
     return table.pack(table.unpack(func, 1 + limit * batches))
-  end
+end
 
 --- <b>Wait for all functions to finish.</b>
 ---@param tab table List of objects to wait for.
@@ -36,6 +46,10 @@ function Helper.waitForAllTab(tab, fnGetter)
     parallel.waitForAll(table.unpack(fns));
 end
 
+--- <b>Wait for all functions to finish.</b>
+---@param from any
+---@param to any
+---@param fnGetter any
 function Helper.waitForAllIt(from, to, fnGetter)
     local fns = {};
     for i = from, to do
@@ -44,7 +58,6 @@ function Helper.waitForAllIt(from, to, fnGetter)
     parallel.waitForAll(table.unpack(fns));
 end
 
-
 --- <b>Check if a program is run from shell or from `require`.</b>
 ---@param args table Arguments passed to the program from `{...}`.
 ---@return boolean required Whether the program was run from `require`.
@@ -52,11 +65,15 @@ function Helper.isRequired(args)
     return #args == 2 and type(package.loaded[args[1]]) == "table" and not next(package.loaded[args[1]]);
 end
 
+--- <b>Repeats a function a number of times.</b>
+---@param times integer
+---@param fn function
+---@param ... any
 function Helper.rep(times, fn, ...)
     for i = 1, times do fn(...); end
 end
 
---- Returns the index of a character in a string.
+--- <b>Returns the index of a character in a string.</b>
 ---@param char string
 ---@param str string
 ---@return integer
@@ -68,7 +85,7 @@ function Helper.indexOf(char, str)
     return -1
 end
 
---- Returns the last index of a character in a string.
+--- <b>Returns the last index of a character in a string.</b>
 ---@param char string
 ---@param str string
 ---@return integer
@@ -80,7 +97,7 @@ function Helper.lastIndexOf(char, str)
     return -1;
 end
 
---- Iterates from start to finish (works with going from larger to smaller).
+--- <b>Iterates from start to finish (works with going from larger to smaller).</b>
 ---@param start number
 ---@param finish number
 ---@return function
@@ -99,14 +116,14 @@ function Helper.iterate(start, finish)
     end
 end
 
---- Returns an iterator that iterates throughout a table.
+--- <b>Returns an iterator that iterates throughout a table.</b>
 ---@param t table
 ---@return function
 function Helper.ipairs(t)
     return Helper.iterate(1, #t);
 end
 
---- Returns the minimum value.
+--- <b>Returns the minimum value.</b>
 ---@param ... number
 ---@return number min The minimum value
 function Helper.min(...)
@@ -117,7 +134,7 @@ function Helper.min(...)
     return ret;
 end
 
---- Returns the maximum value.
+--- <b>Returns the maximum value.</b>
 ---@param ... number
 ---@return number max The maximum value
 function Helper.max(...)
@@ -128,7 +145,7 @@ function Helper.max(...)
     return ret;
 end
 
---- Rounds value down to the nearest multiple of target.
+--- <b>Rounds value down to the nearest multiple of target.</b>
 ---@param value number 
 ---@param target number
 ---@return number
@@ -136,7 +153,7 @@ function Helper.roundDown(value, target)
     return value - (value % target);
 end
 
---- Rounds value up to the nearest multiple of target.
+--- <b>Rounds value up to the nearest multiple of target.</b>
 ---@param value number 
 ---@param target number
 ---@return number
@@ -144,7 +161,7 @@ function Helper.roundUp(value, target)
     return value + (target - (value % target));
 end
 
---- Rounds value to the nearest multiple of target.
+--- <b>Rounds value to the nearest multiple of target.</b>
 ---@param value number
 ---@param target number
 ---@return number
@@ -154,7 +171,28 @@ function Helper.round(value, target)
     return Helper._if(up - value < value - down, up, down);
 end
 
---- A way to return a default value, if the given value is nil.
+--- <b>Saves a table to a JSON file.</b>
+---@param path string
+---@param tab table
+function Helper.saveJSON(path, tab)
+    local serialized = textutils.serialiseJSON(tab);
+    local file = fs.open(path, "w");
+    file.write(serialized);
+    file.close();
+end
+
+--- <b>Loads a table from a JSON file.</b>
+---@param path string
+---@return table|nil
+function Helper.loadJSON(path)
+    if (not fs.exists(path)) then return; end
+    local file = fs.open(path, "r");
+    local unserialised = file.readAll();
+    file.close();
+    return textutils.unserialiseJSON(unserialised);
+end
+
+--- <b>A way to return a default value, if the given value is nil.</b>
 ---@param value any
 ---@param defValue any
 ---@return any
@@ -163,7 +201,7 @@ function Helper._def(value, defValue)
     return value;
 end
 
---- Simplified if else statement.
+--- <b>Simplified if else statement.</b>
 ---@param exp boolean
 ---@param a any
 ---@param b any
@@ -171,6 +209,35 @@ end
 function Helper._if(exp, a, b)
     if (exp) then return a;
     else return b; end
+end
+
+--- <b>Simplifies accessing an assumed table by nil checking</b>
+--- ```lua
+--- if (tab == nil) then return nil; end 
+--- return tab[key];
+--- ```
+---@param tab table|nil
+---@param key any
+---@return any|nil
+function Helper._gnil(tab, key)
+    if (tab == nil) then return nil; end
+    return tab[key];
+end
+
+--- <b>Copies a table.</b>
+---@param tab table
+---@return table
+function Helper.copy(tab)
+    local ret = {};
+    for k, v in pairs(tab) do
+        local t = type(v);
+        if (t == "table") then
+            ret[k] = Helper.copy(v);
+        else
+            ret[k] = v;
+        end
+    end
+    return ret;
 end
 
 

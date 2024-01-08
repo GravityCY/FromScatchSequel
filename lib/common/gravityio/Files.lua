@@ -2,8 +2,8 @@
 --- Description: A library for working with files.
 --- Version: 0.1.0
 
-local Path = require(".lib.gravityio.Path");
-local Helper = require(".lib.gravityio.Helper");
+local Path = require("gravityio.Path");
+local Helper = require("gravityio.Helper");
 
 local Files = {};
 

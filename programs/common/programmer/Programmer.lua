@@ -4,11 +4,12 @@
 
 ---@diagnostic disable: need-check-nil
 
-local Path = require(".lib.gravityio.Path");
-local Files = require(".lib.gravityio.Files");
-local Peripheralia = require(".lib.gravityio.Peripheralia");
-local Inventorio = require(".lib.gravityio.Inventorio")
-local Helper = require(".lib.gravityio.Helper");
+local Path = require("gravityio.Path");
+local Files = require("gravityio.Files");
+local AddressTranslations = require("gravityio.AddressTranslations");
+local Peripheralia = require("gravityio.Peripheralia");
+local Inventorio = require("gravityio.Inventorio")
+local Helper = require("gravityio.Helper");
 
 local _def = Helper._def;
 local _if = Helper._if;
@@ -17,10 +18,12 @@ local Programmer = {};
 
 local args = {...};
 
+local adtr = AddressTranslations.new("programmer");
+
 local drive = Peripheralia.first("drive");
 
-local input = Inventorio.new("minecraft:chest_2");
-local output = Inventorio.new("minecraft:chest_3");
+local input = Inventorio.get(adtr.get("input")).init();
+local output = Inventorio.get(adtr.get("output")).init();
 
 function Programmer.programCustom(slot, item, customFn)
     input.push(drive, slot);

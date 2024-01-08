@@ -2,7 +2,7 @@
 --- Description: A library for working with paths.
 --- Version: 0.2.0
 
-local Helper = require(".lib.gravityio.Helper");
+local Helper = require("gravityio.Helper");
 
 local _def = Helper._def;
 local _if = Helper._if;

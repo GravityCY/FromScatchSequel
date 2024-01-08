@@ -292,25 +292,44 @@ local function makeText(nSize, sString, nFC, nBC, bBlit)
     return { tText, tFront, tBack }
 end
 
+local function toClass(data)
+    local self = {};
+
+    function self.getWidth()
+        return #data[1][1];
+    end
+
+    function self.getHeight()
+        return #data[1];
+    end
+
+    function self.toData()
+        return data;
+    end
+
+    return self;
+end
+
 --# Writing in big font using current terminal settings.
-b.bigWrite = function(sString)
+function b.bigWrite(sString)
     expect(1, sString, "string")
     stamp(term, makeText(1, sString, term.getTextColor(), term.getBackgroundColor()), term.getCursorPos())
     local x, y = term.getCursorPos()
     term.setCursorPos(x, y - 2)
 end
+
 --- Get's the size of a given string.
 ---@param str string String to get the size of
 ---@param size number Scale
----@return integer width
----@return integer height
-b.getSize = function(str, size)
-    local tData = makeText(size, str, term.getTextColor(), term.getBackgroundColor());
-    local width, height = #tData[1][1], #tData[1];
-    return width, height;
+function b.getData(str, size)
+    return toClass(makeText(size, str, term.getTextColor(), term.getBackgroundColor()));
 end
 
-b.bigBlit = function(sString, sFront, sBack)
+function b.writeData(data, x, y)
+    press(term, data.toData(), x, y);
+end
+
+function b.bigBlit(sString, sFront, sBack)
     expect(1, sString, "string")
     expect(2, sFront, "string")
     expect(3, sBack, "string")
@@ -321,21 +340,21 @@ b.bigBlit = function(sString, sFront, sBack)
     term.setCursorPos(x, y - 2)
 end
 
-b.bigPrint = function(sString)
+function b.bigPrint(sString)
     expect(1, sString, "string")
     stamp(term, makeText(1, sString, term.getTextColor(), term.getBackgroundColor()), term.getCursorPos())
     print()
 end
 
 --# Writing in huge font using current terminal settings.
-b.hugeWrite = function(sString)
+function b.hugeWrite(sString)
     expect(1, sString, "string")
     stamp(term, makeText(2, sString, term.getTextColor(), term.getBackgroundColor()), term.getCursorPos())
     local x, y = term.getCursorPos()
     term.setCursorPos(x, y - 8)
 end
 
-b.hugeBlit = function(sString, sFront, sBack)
+function b.hugeBlit(sString, sFront, sBack)
     expect(1, sString, "string")
     expect(2, sFront, "string")
     expect(3, sBack, "string")
@@ -346,7 +365,7 @@ b.hugeBlit = function(sString, sFront, sBack)
     term.setCursorPos(x, y - 8)
 end
 
-b.hugePrint = function(sString)
+function b.hugePrint(sString)
     expect(1, sString, "string")
     stamp(term, makeText(2, sString, term.getTextColor(), term.getBackgroundColor()), term.getCursorPos())
     print()
