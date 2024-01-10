@@ -4,7 +4,7 @@
 
 package.path = package.path .. ";/lib/?.lua"
 
-local AddressTranslations = require("gravityio.AddressTranslations");
+local EasyAddress = require("gravityio.EasyAddress");
 local Peripheralia = require("gravityio.Peripheralia");
 local Inventorio = require("gravityio.Inventorio");
 local Helper = require("gravityio.Helper");
@@ -146,7 +146,7 @@ local stats = {
     smelted = {},
 };
 
-local adtr = AddressTranslations.new("smelter");
+local adtr = EasyAddress.new("smelter");
 
 adtr.setDescriptions({
     input="The Input Inventory.",

@@ -1,0 +1,10 @@
+{
+    "message.wait": "Please enable the peripheral '%s'...",
+    "message.wait_multi": "Please enable a peripheral in the category of '%s'...",
+    "message.desc_info": "Additional Information is Available: ",
+    "message.desc_value": "'%s'",
+    "message.select_multi": "Select one of the following: ",
+    "message.do_multi": "Do you want to select all? (y/n): ",
+    "message.confirm": "Are you sure you want to set the peripheral '%s' as '%s'? (y/n): ",
+    "message.confirm_multi": "Are you sure you want to select '%s' as '%s'? (y/n): "
+}

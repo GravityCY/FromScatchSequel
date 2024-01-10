@@ -240,5 +240,22 @@ function Helper.copy(tab)
     return ret;
 end
 
+function Helper.concat(tab1, tab2)
+    for _, v in ipairs(tab2) do
+        table.insert(tab1, v);
+    end
+end
+
+--- <b>Creates an array of arrays.</b>
+---@param size any
+---@return table
+function Helper._arr(size)
+    local ret = {};
+    for i = 1, size do
+        ret[i] = {};
+    end
+    return ret;
+end
+
 
 return Helper;

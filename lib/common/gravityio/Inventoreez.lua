@@ -90,8 +90,15 @@ function Inventoreez.new()
     end
 
     function self.add(addr)
-        LOGGER.debug("Adding inventory", addr);
+        addr = Inventorio.asAddress(addr);
+
         table.insert(all, Inventorio.get(addr));
+    end
+
+    function self.addAll(addrsList)
+        for _, addr in ipairs(addrsList) do
+            self.add(addr);
+        end
     end
 
     function self.remove(addr)
@@ -172,7 +179,8 @@ function Inventoreez.new()
         return pushed;
     end
 
-    --- THINK: Make it so that you can not specify toSlot, so that it by default tries to find the first available slot.
+    --- THINK: Make it so that you don't need to specify `toSlot`, so that it by default tries to find the first available slot.
+
     --- <b>Pull items from one inventory to another</b>
     ---@param fromAddr string
     ---@param fromSlot integer

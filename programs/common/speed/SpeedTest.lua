@@ -3,7 +3,7 @@ package.path = package.path .. ";/lib/?.lua";
 local BigFont = require("gravityio.BigFont");
 local Helper = require("gravityio.Helper");
 local Timer = require("gravityio.Timer");
-local AddressTranslations = require("gravityio.AddressTranslations");
+local EasyAddress = require("gravityio.EasyAddress");
 
 local FORMAT_0 = "Waiting for first integrator activation...";
 local FORMAT_1 = "Waiting for last integrator activation...";
@@ -76,7 +76,7 @@ function Speaker.new(periph)
     return periph;
 end
 
-local adtr = AddressTranslations.new("speed_test");
+local adtr = EasyAddress.new("speed_test");
 
 local sx, sy = term.getSize();
 

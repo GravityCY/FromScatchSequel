@@ -6,7 +6,7 @@
 
 local Path = require("gravityio.Path");
 local Files = require("gravityio.Files");
-local AddressTranslations = require("gravityio.AddressTranslations");
+local EasyAddress = require("gravityio.EasyAddress");
 local Peripheralia = require("gravityio.Peripheralia");
 local Inventorio = require("gravityio.Inventorio")
 local Helper = require("gravityio.Helper");
@@ -18,7 +18,7 @@ local Programmer = {};
 
 local args = {...};
 
-local adtr = AddressTranslations.new("programmer");
+local adtr = EasyAddress.new("programmer");
 
 local drive = Peripheralia.first("drive");
 

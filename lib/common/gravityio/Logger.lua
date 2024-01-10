@@ -6,12 +6,15 @@ local LogHandlerList = {};
 local PrintLogHandler = {};
 local FileLogHandler = {};
 
-function LogHandlerList.new()
+function LogHandlerList.new(...)
     local self = {};
-    local handlers = {};
+    local handlers = {...};
 
-    function self.add(handler)
-        table.insert(handlers, handler);
+    function self.add(...)
+        for _, handler in ipairs({...}) do
+            table.insert(handlers, handler);
+        end
+        return self;
     end
 
     function self.print(message)
