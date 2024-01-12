@@ -1,6 +1,33 @@
 local Identifier = {};
 
+Identifier.Builder = {};
+
+--- <b>Creates an identifier builder.</b>
+---@param namespace string
+function Identifier.Builder.new(namespace)
+    local self = {};
+
+    --- <b>Returns an identifier</b>
+    ---@param path string
+    ---@return Identifier|string
+    function self.build(path)
+        return Identifier.new(namespace, path);
+    end
+
+    --- <b>Returns a string identifier</b>
+    ---@param path string
+    ---@return string
+    function self.buildString(path)
+        return namespace .. ":" .. path;
+    end
+    return self;
+end
+
 function Identifier.new(namespace, path)
+    ---@class Identifier
+    ---@field namespace string
+    ---@field path string
+    ---@field key string
     local self = {};
 
     local function _new1(_namespace, _path)

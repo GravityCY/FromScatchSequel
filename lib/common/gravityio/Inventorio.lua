@@ -10,12 +10,12 @@
 ---@field pushItems fun(addr: string, fromSlot: integer, amount: integer|nil, toSlot: integer|nil):integer
 ---@field pullItems fun(addr: string, fromSlot: integer, amount: integer|nil, toSlot: integer|nil):integer
 
+local Peripheralia = require("gravityio.Peripheralia");
+local Timer = require("gravityio.Timer");
 local Logger = require("gravityio.Logger");
 local Helper = require("gravityio.Helper");
-local Peripheralia = require("gravityio.Peripheralia");
 
 local _def = Helper._def;
-local _if = Helper._if;
 local _gnil = Helper._gnil;
 
 local function instanceof(obj, class)
@@ -35,7 +35,7 @@ local function asInventory(obj)
     return Peripheralia.asPeripheral(obj);
 end
 
-local LOGGER = Logger.new("inventorio");
+local LOGGER = Logger.get("inventorio");
 
 local Timer = {}
 
@@ -182,6 +182,9 @@ function Inventorio.get(periph)
         self.itemListCache[slot] = item;
     end
 
+    --- <b>Initializes the inventory.</b> <br>
+    --- This will setup the size of the inventory, and it will cache the inventory.
+    ---@return Inventorio
     function self.init()
         self.sizeCache = inv.size();
         self.cache();
@@ -327,8 +330,13 @@ function Inventorio.get(periph)
         if (emptyA and emptyB) then return true; end
 
         if (emptyA or emptyB) then
-            local nonEmpty = _if(emptyA, slotB, slotA);
-            local empty = _if(emptyA, slotA, slotB);
+            local nonEmpty = nil;
+            if (emptyA) then nonEmpty = slotB;
+            else nonEmpty = slotB; end
+
+            local empty = nil;
+            if (emptyA) then empty = slotA;
+            else empty = slotB; end
             self.push(nil, nonEmpty, empty);
         else
             local emptySlot = self.findEmpty(true);
@@ -420,6 +428,9 @@ function Inventorio.get(periph)
         return lowest;
     end
 
+    --- <b>Finds an item in this inventory.</b>
+    ---@param cb fun(slot: integer, item: table): boolean
+    ---@return number|nil slot
     function self.findCB(cb)
         for slot, item in pairs(self.getItems()) do
             if (cb(slot, item)) then
@@ -428,14 +439,19 @@ function Inventorio.get(periph)
         end
     end
 
-    --- Finds and empty slot in this inventory.
+    --- <b>Finds and empty slot in this inventory.</b>
     ---@param reverse boolean|nil Whether to search in reverse. (useful since usually empty slots are at the end)
     ---@return number|nil slot
     function self.findEmpty(reverse)
         reverse = _def(reverse, true);
 
-        local start = _if(reverse, self.sizeCache, 1);
-        local finish = _if(reverse, 1, self.sizeCache);
+        local start = nil;
+        if (reverse) then start = self.sizeCache;
+        else start = 1; end
+
+        local finish = nil;
+        if (reverse) then finish = 1;
+        else finish = self.sizeCache; end
 
         for i in Helper.iterate(start, finish) do
             if (self.isEmptyAt(i)) then return i; end

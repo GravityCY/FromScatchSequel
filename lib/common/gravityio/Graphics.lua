@@ -10,7 +10,6 @@ local tpx, tpy = 0, 0;
 local pixelMode = false;
 local pixels = {};
 
-
 local function getLowHigh(a, b)
     if (a < b) then return a, b;
     else return b, a; end

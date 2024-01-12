@@ -1,4 +1,4 @@
-local Language = require "gravityio.Language"
+local Language = require("gravityio.Language")
 local CMDL = {};
 
 ---@type table<string, Command>
@@ -29,6 +29,8 @@ function CMDL.onUnknownCommand(cb)
     unknownCommandCB = cb;
 end
 
+--- <b>Returns a list of all commands.</b>
+---@return Command[]
 function CMDL.commands()
     local list = {};
     for name, cmd in pairs(cmdMap) do
@@ -39,6 +41,7 @@ end
 
 --- <b>Registers a new command.</b>
 ---@param name string The name of the command
+---@param descKey string The description key
 ---@param callback fun(...) The callback function
 function CMDL.command(name, descKey, callback)
     ---@class Command
@@ -65,7 +68,8 @@ function CMDL.input(strInput)
 end
 
 unknownCommandCB = function (cmdName)
-    Language.print("cmdl.messages.unknown_command", cmdName);
+    Language.printKey("cmdl:messages.unknown_command", cmdName);
+    Language.printKey("cmdl:messages.available_commands");
     for _, cmd in ipairs(CMDL.commands()) do
         print(" - " .. cmd.name .. " - " .. Language.getKey(cmd.descKey));
     end

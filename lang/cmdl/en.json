@@ -1,3 +1,4 @@
 {
-    "cmdl.messages.unknown_command": "Unknown Command: "
+    "messages.unknown_command": "No such command '%s'.",
+    "messages.available_commands": "Available Commands: "
 }

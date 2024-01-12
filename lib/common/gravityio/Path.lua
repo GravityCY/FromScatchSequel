@@ -5,7 +5,6 @@
 local Helper = require("gravityio.Helper");
 
 local _def = Helper._def;
-local _if = Helper._if;
 
 local Path = {};
 
@@ -52,19 +51,23 @@ end
 ---@return string
 function Path.getFileName(path)
     local i = Helper.lastIndexOf("/", path);
-    local ret = _if(i == -1, path, path:sub(i + 1));
+    local ret = nil;
+    if (i == -1) then ret = path;
+    else ret = path:sub(i + 1); end
 
     local j = Helper.lastIndexOf(".", ret);
-    return _if(j == -1, ret, ret:sub(1, j - 1));
+    if (j == -1) then return ret;
+    else return ret:sub(1, j - 1); end
 end
 
 --- <b>Get the file extension of a path.</b> <br>
 --- Examples: `"hello/there.txt"` → `"txt"`.
 ---@param path string
----@return string
+---@return string|nil
 function Path.getFileExtension(path)
     local i = Helper.lastIndexOf(".", path);
-    return _if(i == -1, nil, path:sub(i));
+    if (i == -1) then return nil; end
+    return path:sub(i + 1);
 end
 
 --- <b>Get the file path of a path.</b> <br>
@@ -73,7 +76,8 @@ end
 ---@return string
 function Path.getFilePath(path)
     local i = Helper.lastIndexOf("/", path);
-    return _if(i == -1, "/", path:sub(1, i));
+    if (i == -1) then return "/"; end
+    return path:sub(1, i);
 end
 
 --- <b>Get the absolute path of a path.</b> <br>

@@ -1,0 +1,16 @@
+{
+    "messages.continue": "Sinexia? (y/n): ",
+
+    "messages.enter_language": "Kataxoriste glossa: ",
+
+    "commands.prompt": "Kataxoriste entoli: ",
+
+    "command.storage.desc": "Prosthiki neas apothikis.",
+    "command.interface.desc": "Prosthiki neas interface.",
+    "command.importer.desc": "Prosthiki neas importer.",
+    "command.exporter.desc": "Prosthiki neas exporter.",
+    "command.language.desc": "Ruthmizei nea glossa.",
+
+    "command.language.success": "Allagh glossas se '%s'.",
+    "command.language.incomplete": "'%s' einai hmiteles."
+}

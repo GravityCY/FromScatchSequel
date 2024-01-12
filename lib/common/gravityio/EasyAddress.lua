@@ -1,20 +1,23 @@
 local Language = require("gravityio.Language");
+local Identifier = require("gravityio.Identifier");
 local Helper = require("gravityio.Helper")
-
-local LANG = Language.getInstance("address_translations");
 
 local EasyAddress = {};
 
-local WAIT_KEY = "message.wait";
-local WAIT_MULTI_KEY = "message.wait_multi";
-local DESC_KEY = "message.desc_info";
-local DESC_VALUE_KEY = "message.desc_value";
-local MULTIPLE_KEY = "message.select_multi";
-local MULTIPLE_MULTI_KEY = "message.do_multi";
-local CONFIRM_KEY = "message.confirm";
-local CONFIRM_MULTI_KEY = "message.confirm_multi";
+local NAMESPACE = "easy_address";
+local BUILDER = Identifier.Builder.new(NAMESPACE);
+local _build = BUILDER.buildString;
 
-local PATH = "/data/address_translations/";
+local WAIT_KEY = _build("message.wait");
+local WAIT_MULTI_KEY = _build("message.wait_multi");
+local DESC_KEY = _build("message.desc_info");
+local DESC_VALUE_KEY = _build("message.desc_value");
+local MULTIPLE_KEY = _build("message.select_multi");
+local MULTIPLE_MULTI_KEY = _build("message.do_multi");
+local CONFIRM_KEY = _build("message.confirm");
+local CONFIRM_MULTI_KEY = _build("message.confirm_multi");
+
+local PATH = "/data/easy_address/";
 
 function EasyAddress.pullMultiple(name)
     local ret = {};
@@ -62,10 +65,10 @@ function EasyAddress.wait(name, description)
     local function ui_waiting()
         term.clear();
         term.setCursorPos(1, 1)
-        print(LANG.get(WAIT_KEY, name));
+        Language.printKey(WAIT_KEY, name);
         if (description) then
-            print(LANG.get(DESC_KEY));
-            print(LANG.get(DESC_VALUE_KEY, description:format(name)));
+            Language.printKey(DESC_KEY);
+            Language.printKey(DESC_VALUE_KEY, description:format(name));
         end
     end
 
@@ -76,7 +79,7 @@ function EasyAddress.wait(name, description)
     local function ui_received(addressList)
         local addr = addressList[1];
         if (#addressList > 1) then
-            write(MULTIPLE_FORMAT);
+            Language.write(MULTIPLE_KEY);
             local x, y = term.getCursorPos();
             local ey;
             print();
@@ -89,7 +92,7 @@ function EasyAddress.wait(name, description)
             term.setCursorPos(1, ey);
             addr = addressList[index];
         end
-        print(LANG.get(CONFIRM_KEY, addr, name));
+        Language.printKey(CONFIRM_KEY, addr, name);
         local confirm = read():lower();
         if (confirm == "y") then return true, addr; end
         return false;
@@ -112,10 +115,10 @@ function EasyAddress.waitMultiple(name, description, prev)
     local function ui_waiting()
         term.clear();
         term.setCursorPos(1, 1)
-        print(LANG.get(WAIT_MULTI_KEY, name));
+        Language.printKey(WAIT_MULTI_KEY, name);
         if (description) then
-            print(LANG.get(DESC_KEY));
-            print(LANG.get(DESC_VALUE_KEY, description:format(name)));
+            Language.printKey(DESC_KEY);
+            Language.printKey(DESC_VALUE_KEY, description:format(name));
         end
     end
 
@@ -124,14 +127,14 @@ function EasyAddress.waitMultiple(name, description, prev)
     ---@return string[]|nil address The address of the peripheral
     local function ui_received(addressList)
         if (#addressList > 1) then
-            write(LANG.get(MULTIPLE_MULTI_KEY));
+            Language.write(MULTIPLE_MULTI_KEY);
             local confirm = read():lower();
             if (confirm == "y") then
                 local str = "";
                 for i, a in ipairs(addressList) do
                     str = str .. a .. ",";
                 end
-                print(LANG.get(CONFIRM_MULTI_KEY, str, name));
+                Language.printKey(CONFIRM_MULTI_KEY, str, name);
                 local confirmMulti = read():lower();
                 if (confirmMulti == "y") then return addressList; end
             else
@@ -148,7 +151,7 @@ function EasyAddress.waitMultiple(name, description, prev)
                 return {addressList[index]};
             end
         else
-            print(LANG.get(CONFIRM_KEY, addressList[1], name));
+            Language.printKey(CONFIRM_KEY, addressList[1], name);
             local confirm = read():lower();
             if (confirm == "y") then return {addressList[1]}; end
         end
@@ -166,10 +169,6 @@ function EasyAddress.waitMultiple(name, description, prev)
     end
 
     return ret;
-end
-
-function EasyAddress.getLanguage()
-    return LANG;
 end
 
 --- <b>Creates an address translation table.</b>

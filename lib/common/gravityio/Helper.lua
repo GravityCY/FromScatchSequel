@@ -97,6 +97,76 @@ function Helper.lastIndexOf(char, str)
     return -1;
 end
 
+function Helper.addToString(str, add, findPattern)
+    local start = str:find(findPattern);
+    return str:sub(1, start - 1) .. add .. str:sub(start);
+end
+
+--- <b>Returns the string before an index.</b> <br>
+--- Example: `Helper.getBeforeIndex("hello...world", 5)` will return `"hello"`
+---@param str string
+---@param index integer
+---@return string
+function Helper.getBeforeIndex(str, index)
+    return str:sub(1, index - 1);
+end
+
+--- <b>Returns the string after an index.</b> <br>
+--- Example: `Helper.getAfterIndex("hello...world", 5)` will return `"...world"`
+---@param str string
+---@param index integer
+---@return string
+function Helper.getAfterIndex(str, index)
+    return str:sub(index + 1);
+end
+
+--- <b>Returns the string before the first pattern.</b>
+---@param str string
+---@param findPattern string
+---@return string|nil
+function Helper.getBeforePattern(str, findPattern)
+    local startIndex = str:find(findPattern);
+    if (startIndex == nil) then return nil; end
+
+    return Helper.getBeforeIndex(str, startIndex);
+end
+
+--- <b>Returns the string after the first pattern.</b>
+---@param str string
+---@param findPattern string
+---@return string|nil
+function Helper.getAfterPattern(str, findPattern)
+    local _, endIndex = str:find(findPattern);
+    if (endIndex == nil) then return nil; end
+
+    return Helper.getAfterIndex(str, endIndex);
+end
+
+--- <b>Splits a string in two using an index.</b> <br>
+--- Example: `Helper.splitIndex("hello...world", 6, 8)` will return `"hello", "world"`
+---@param str string
+---@param startIndex integer
+---@param endIndex integer|nil
+---@return string
+---@return string
+function Helper.splitIndex(str, startIndex, endIndex)
+    if (endIndex == nil) then endIndex = startIndex; end
+    return Helper.getBeforeIndex(str, startIndex), Helper.getAfterIndex(str, endIndex);
+end
+
+--- <b>Splits a string in two using a pattern.</b> <br>
+--- Example: `Helper.splitPattern("hello...world", "%.%.%.")` will return `"hello", "world"`
+---@param str string
+---@param findPattern string
+---@return string|nil
+---@return string|nil
+function Helper.splitPattern(str, findPattern)
+    local startIndex, endIndex = str:find(findPattern);
+    if (startIndex == nil or endIndex == nil) then return nil; end
+
+    return Helper.splitIndex(str, startIndex, endIndex);
+end
+
 --- <b>Iterates from start to finish (works with going from larger to smaller).</b>
 ---@param start number
 ---@param finish number

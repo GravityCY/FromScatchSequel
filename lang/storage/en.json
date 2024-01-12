@@ -1,4 +1,16 @@
 {
-    "storage.command.add.desc": "Adds storage.",
-    "storage.commands.prompt": "Enter a Command: "
+    "messages.continue": "Continue (y/n): ",
+
+    "messages.enter_language": "Enter a language: ",
+
+    "commands.prompt": "Enter a Command: ",
+
+    "command.storage.desc": "Adds storage.",
+    "command.interface.desc": "Adds interface.",
+    "command.importer.desc": "Adds importer.",
+    "command.exporter.desc": "Adds exporter.",
+    "command.language.desc": "Sets the language.",
+
+    "command.language.success": "Language set to '%s'.",
+    "command.language.incomplete": "'%s' is incomplete."
 }

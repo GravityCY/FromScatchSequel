@@ -5,9 +5,10 @@ local Helper = require("gravityio.Helper");
 local _def = Helper._def;
 
 local Inventoreez = {};
-local LOGGER = Logger.new("inventoreez");
+local LOGGER = Logger.get("inventoreez");
 
 function Inventoreez.new()
+    LOGGER.debug("Creating new Inventoreez");
     ---@class Inventoreez
     local self = {};
 
@@ -49,7 +50,7 @@ function Inventoreez.new()
         for ind, inv in ipairs(all) do
             size = size + inv.getSize();
         end
-        LOGGER.debug("Initialized size:", size);
+        LOGGER.debug("Initialized size: %d", size);
         updateItems();
     end
 
@@ -90,6 +91,7 @@ function Inventoreez.new()
     end
 
     function self.add(addr)
+        LOGGER.debug("Adding address '%s'", addr);
         addr = Inventorio.asAddress(addr);
 
         table.insert(all, Inventorio.get(addr));
@@ -102,7 +104,7 @@ function Inventoreez.new()
     end
 
     function self.remove(addr)
-        LOGGER.debug("Removing inventory", addr);
+        LOGGER.debug("Removing address '%s'", addr);
         local prev = all;
         all = {};
         for ind, inv in ipairs(prev) do
@@ -115,6 +117,8 @@ function Inventoreez.new()
     --- <b>Caches all inventories</b> <br>
     --- Caches all the internal inventories, and updates the item lists
     function self.cache()
+        LOGGER.debug("Caching inventories");
+        
         local fns = {};
         for ind, inv in ipairs(all) do
             table.insert(fns, inv.cache);
@@ -149,6 +153,7 @@ function Inventoreez.new()
     end
 
     function self.swap(slotA, slotB)
+        LOGGER.debug("Swapping %d and %d", slotA, slotB);
         local invA, intSlotA = self.getInternal(slotA);
         local invB, intSlotB = self.getInternal(slotB);
         local aEmpty, bEmpty = invA.isEmptyAt(intSlotA), invB.isEmptyAt(intSlotB);
@@ -172,6 +177,7 @@ function Inventoreez.new()
     ---@param amount integer|nil
     ---@return integer
     function self.push(toAddr, fromSlot, toSlot, amount)
+        LOGGER.debug("Pushing %d items to '%s' from slot %d to slot %d", amount, toAddr, fromSlot, toSlot);
         local internalInv, internalSlot = self.getInternal(fromSlot);
         if (internalInv == nil or internalSlot == nil) then return 0 end
         local pushed = internalInv.push(toAddr, internalSlot, toSlot, amount);
@@ -188,6 +194,8 @@ function Inventoreez.new()
     ---@param amount integer|nil
     ---@return integer
     function self.pull(fromAddr, fromSlot, toSlot, amount)
+        LOGGER.debug("Pulling %d items from '%s' from slot %d to slot %d", amount, fromAddr, fromSlot, toSlot);
+
         local internalInv, internalSlot = self.getInternal(toSlot);
         if (internalInv == nil) then return 0 end
         local pulled = internalInv.pull(fromAddr, fromSlot, internalSlot, amount);
@@ -223,6 +231,8 @@ function Inventoreez.new()
     ---@param toSlot integer|nil
     ---@param amount integer
     function self.pushName(toAddr, itemName, toSlot, amount)
+        LOGGER.debug("Pushing %d items by name '%s' to '%s' to slot %d", amount, itemName, toAddr, toSlot);
+
         return self.pushCB(toAddr, Inventorio.getNamePredicate(itemName), toSlot, amount);
     end
 

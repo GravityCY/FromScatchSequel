@@ -3,9 +3,53 @@
 --- Version: 0.1.0
 
 local Path = require("gravityio.Path");
+local Logger = package.loaded["gravityio.Logger"];
 local Helper = require("gravityio.Helper");
 
+local NAMESPACE = "files";
+-- local LOGGER = Logger.get(NAMESPACE);
+
 local Files = {};
+
+--- <b>Rename a file to a new name</b> <br>
+--- `to` can be in a special format in order to create a new name if a file at `to` already exists. <br>
+--- For example: `to` can be like so; `"hello{-%s}.txt"` which will iteratively check for `hello.txt`, `hello-1.txt`, `hello-2.txt`, etc.
+---@param from string
+---@param to string
+function Files.rename(from, to)
+    local isFormat = to:find("{.+}");
+    if (isFormat ~= nil) then
+        -- LOGGER.debug("User specified format: '%s'", to);
+        local formatString = to:match("{(.+)}");
+
+        local first, last = Helper.splitPattern(to, "{.+}");
+        local newPath = first .. last;
+        if (fs.exists(newPath)) then
+            local i = 1;
+            while true do
+                newPath = first..formatString:format(i)..last;
+                if (fs.exists(newPath)) then i = i + 1;
+                else break; end
+            end
+        end
+        -- LOGGER.debug("Renaming '%s' to '%s'", from, newPath);
+        fs.move(from, newPath);
+    else
+        local newPath = to;
+        if (fs.exists(newPath)) then
+            local dotIndex = Helper.lastIndexOf(".", to);
+            local first, last = Helper.splitIndex(to, dotIndex);
+            local i = 1;
+            while true do
+                newPath = first.."-"..i.."."..last;
+                if (fs.exists(newPath)) then i = i + 1;
+                else break; end
+            end
+        end
+        -- LOGGER.debug("Renaming '%s' to '%s'", from, newPath);
+        fs.move(from, newPath);
+    end
+end
 
 --- <b>Copy a file</b> <br>
 --- Overwrites existing file
