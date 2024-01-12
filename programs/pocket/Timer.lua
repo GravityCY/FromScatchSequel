@@ -1,4 +1,5 @@
-local BigFont = require("BigFont");
+package.path = package.path..";/lib/?.lua";
+local BigFont = require("gravityio.BigFont");
 
 local FINISH_FORMAT = "TIMES UP!";
 local TIMER_FORMAT = "%.2fs";
