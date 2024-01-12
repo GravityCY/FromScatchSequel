@@ -22,6 +22,10 @@ A library for handling some graphics utilities.
 ### Helper
 A bunch of repeatedly used code that I seem to use.
 
+### Inventorio
+A library to create Inventorio objects around inventory peripherals, and providing alot of useful functions
+like inventory caching, tries to update the cache based on `push` calls and `pull` calls (WIP)
+
 ### Inventoreez
 A library for conglomerating a bunch of inventories to appear as one cohesive big inventory
 
